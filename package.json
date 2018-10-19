@@ -1,0 +1,16 @@
+{
+  "name": "node-err",
+  "version": "1.0.1",
+  "description": "Utility for easy handling of error flows in Node",
+  "license": "MIT",
+  "repository": "nickjag/node-err",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": {
+    "name": "Nick Jagodzinski",
+    "email": "jag.nick@gmail.com",
+    "url": "nickjag.com"
+  }
+}
