@@ -1,7 +1,10 @@
 
+// Configuration defaults.
+
 let config = {
   prefix: 'SERVER_ERROR',
   logger: defaultLogger,
+  defaultErrorStatus: 500,
 };
 
 /**
@@ -16,7 +19,6 @@ let config = {
  * @return {undefined}
  */
 const init = function(opts={}) {
-  
   config = {
     ...config,
     ...opts,
@@ -29,19 +31,28 @@ const init = function(opts={}) {
  * Use this in a catch block or promise catch.
  * Default behavior is to rethrow error.
  *
- * @param {object}  params            Containing all data.
- * @param {object}  params.err        Main error object.
- * @param {string}  params.name       Name of error.
- * @param {object}  [params.req]      (optional) Express request object.
- * @param {boolean} [params.silent]   (optional) Error silencer (only logs).
- * @param {*}       [params.output]   (optional) Output value, see docs.
- * @param {number}  [params.status]   (optional) Http status to return.
- * @param {object}  [params.context]  (optional) Custom data to attach to error.
+ * @param {object}  err             Main error object.
+ * @param {boolean} rethrow         Should re-throw the error.
+ * @param {object}  opts            Options object.
+ * @param {string}  [opts.name]     (optional) Name of error.
+ * @param {object}  [opts.req]      (optional) Express request object.
+ * @param {*}       [opts.output]   (optional) Output value, see docs.
+ * @param {number}  [opts.status]   (optional) Http status to return.
+ * @param {object}  [opts.context]  (optional) Custom data to attach to error.
  * 
  * @return {(object|*)} Promise rejection or custom output value.
  */
-const handleErr = function({ err, name, req, silent, output, status, context }) {
+const handle = function(err, opts={}, rethrow=true) {
 
+  // destructure options
+
+  let {
+    name='UNHANDLED',
+    req=null,
+    output=null,
+    status=config.defaultErrorStatus,
+    context=null } = opts;
+  
   // create undefined error if we dont have an error.
 
   if (!err) {
@@ -57,12 +68,10 @@ const handleErr = function({ err, name, req, silent, output, status, context }) 
   // add information about the error.
 
   err._handled    = true;
-  err._name       = config.prefix + ' - ' + (name || 'UNHANDLED)');
-  err._status     = (status || 500);
-  err._context    = (context || null);
+  err._name       = config.prefix + ' - ' + name;
+  err._status     = status;
+  err._context    = context;
   err._time       = Math.floor(Date.now());
-  
-  // err.outputJSON  = false;
 
   // add information about the request.
 
@@ -78,15 +87,9 @@ const handleErr = function({ err, name, req, silent, output, status, context }) 
 
   config.logger(err);
 
-  // return silent output value.
+  // rethrow or not
 
-  if (silent) {
-    return handleSilent(err, output);
-  }
-
-  // return rejection.
-  
-  return Promise.reject(err);
+  return (rethrow) ? Promise.reject(err) : (output || err);
 }
 
 /**
@@ -94,34 +97,40 @@ const handleErr = function({ err, name, req, silent, output, status, context }) 
  *
  * Use this to catch unhandled errors after routing.
  */
-const catchUnhandled = function(err, req, res, next) {
-  
-  // add reporting to unhandled errors
+const grab = function(err, req, res, next) {
 
+  // return just the error (no promise)
   if (err._handled) {
     return next(err);
   }
 
-  handleErr({ err, req }).catch(err => next(err));
+  // add reporting to unhandled errors
+  return handle(err, { req }).catch(err => next(err));
 }
 
-const handleSilent = function(err, output) {
+/**
+ * Express helper for next.
+ *
+ * Use this to send the error to the Express next callback.
+ */
+const end = function(err) {
 
-  err._name += '; silenced;';
+  // return just the error (no promise)
+  if (err._handled) {
+    return err;
+  }
 
-  // pass the desired return value back up.
-
-  return (output || false);
+  // add reporting to unhandled errors
+  // and return just error (no promise)
+  
+  return handle(err, {}, false);
 }
 
-const defaultLogger = function(err) {
+function defaultLogger(err) {
+
   console.warn(err._name, err);
 }
 
 // exports
 
-module.exports = {
-  default: init,
-  handleErr: handleErr,
-  catchUnhandled: catchUnhandled,
-};
+module.exports = { init, handle, end, grab };
