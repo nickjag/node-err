@@ -1,9 +1,6 @@
-const fetch = require('node-fetch');
 const nodeErr = require('../../index');
 
 module.exports = (req, res, next) => {
-  
-  let errorApi = (req.testMode ? null : 'https://jsonplaceholder.typicode.com/todos/1'); 
 
   /**
    * Simple promise chain example.
@@ -13,25 +10,22 @@ module.exports = (req, res, next) => {
    * it will automatically re-throw (without adding details).
    * 
    */
+  
 
-  return fetch(errorApi)
-    .then(response => {
-      return response.json();
-    })
-    .then(json => {
-      return res.send(json);
-    })
-    .catch(err => {
-
-      // handle and re-throw error
-
-      return nodeErr.handle(err);
+  return Promise.resolve()
+    .then(() => {
+      let error = new Error('test error');
+      return Promise.reject(error);
     })
     .catch(err => {
-      
-      // catch the error
-
-      return res.status(400).send('An error ocurred.');
+      return nodeErr.repeat(err, { name: 'MY_CUSTOM_ERROR' });
+    })
+    .then(() => {
+      // skipped
+    })
+    .catch(err => {
+      let statusCode = nodeErr.getStatus(err);
+      return res.status(statusCode).send('An error ocurred.');
     });
 
 }

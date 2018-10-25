@@ -3,8 +3,9 @@
 
 let config = {
   prefix: 'SERVER_ERROR',
-  logger: defaultLogger,
   defaultErrorStatus: 500,
+  logger: (err) => console.warn(err._name, err),
+  debug: false,
 };
 
 /**
@@ -26,48 +27,38 @@ const init = function(opts={}) {
 }
 
 /**
- * Main error handling utility.
+ * Main error handler.
  *
- * Use this in a catch block or promise catch.
+ * Used in various interfaces (oneway, intersection, stop).
  * Default behavior is to rethrow error.
  *
  * @param {object}  err             Main error object.
- * @param {boolean} rethrow         Should re-throw the error.
  * @param {object}  opts            Options object.
+ * 
  * @param {string}  [opts.name]     (optional) Name of error.
  * @param {object}  [opts.req]      (optional) Express request object.
- * @param {*}       [opts.output]   (optional) Output value, see docs.
  * @param {number}  [opts.status]   (optional) Http status to return.
  * @param {object}  [opts.context]  (optional) Custom data to attach to error.
  * 
  * @return {(object|*)} Promise rejection or custom output value.
  */
-const handle = function(err, opts={}, rethrow=true) {
+const report = function(err, opts) {
+
+  if (err._reported) {
+    return;
+  }
 
   // destructure options
 
   let {
     name='UNHANDLED',
     req=null,
-    output=null,
     status=config.defaultErrorStatus,
     context=null } = opts;
   
-  // create undefined error if we dont have an error.
-
-  if (!err) {
-    err = new Error('Undefined Error');
-  }
-
-  // if we already handled this error, throw it again.
-
-  if (err._handled) {
-    return Promise.reject(err);
-  }
-
   // add information about the error.
 
-  err._handled    = true;
+  err._reported    = true;
   err._name       = config.prefix + ' - ' + name;
   err._status     = status;
   err._context    = context;
@@ -87,50 +78,81 @@ const handle = function(err, opts={}, rethrow=true) {
 
   config.logger(err);
 
-  // rethrow or not
-
-  return (rethrow) ? Promise.reject(err) : (output || err);
+  return;
 }
 
-/**
- * Express middleware for error handling.
- *
- * Use this to catch unhandled errors after routing.
- */
-const grab = function(err, req, res, next) {
+const rethrow = function(err) {
 
-  // return just the error (no promise)
-  if (err._handled) {
-    return next(err);
+  if (config.debug) {
+    console.log('Error re-thrown at: ', err._name);
   }
-
-  // add reporting to unhandled errors
-  return handle(err, { req }).catch(err => next(err));
-}
-
-/**
- * Express helper for next.
- *
- * Use this to send the error to the Express next callback.
- */
-const end = function(err) {
-
-  // return just the error (no promise)
-  if (err._handled) {
-    return err;
-  }
-
-  // add reporting to unhandled errors
-  // and return just error (no promise)
   
-  return handle(err, {}, false);
+  return Promise.reject(err);
 }
 
-function defaultLogger(err) {
+/**
+ * Main error handling utility.
+ *
+ * Use this in a catch block.
+ *
+ * @param {object|*}  arg   Main error object or custom.
+ * @param {object}    opts  Options object.
+ * 
+ * @return {(object)}     Promise rejection.
+ */
+const repeat = (arg, opts={}) => {
 
-  console.warn(err._name, err);
+  // check if we have an error or custom output
+
+  return (arg instanceof Error) ? handleError(arg, opts) : handleCustom(arg);
+}
+
+const handleError = function(arg, opts) {
+  
+  if (!arg._reported) {
+    report(arg, opts);
+  }
+
+  return rethrow(arg);
+}
+
+const handleCustom = function(arg) {
+  
+  return (err, opts={}) => {
+
+    if (err._reported) {
+      return rethrow(err);
+    }
+
+    let name = (opts.name || err.name || '');
+
+    report(err, { 
+      ...opts, 
+      name: name += '; SILENCED;',
+      status: '0'
+    });
+
+    return (typeof arg === 'undefined') ? err : arg;
+  }
+}
+
+const stop = function(err, opts={}) {
+
+  // return just the error (no promise)
+  
+  if (err._reported) {
+    return;
+  }
+  
+  report(err, opts);
+  return;
+}
+
+
+const getStatus = function(err) {
+  return err._status || config.defaultErrorStatus;
 }
 
 // exports
 
-module.exports = { init, handle, end, grab };
+module.exports = { init, repeat, stop, getStatus };
