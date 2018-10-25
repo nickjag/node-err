@@ -6,7 +6,7 @@ module.exports = (req, res, next) => {
   '<a href="/3-multi-directional-promises">3 - Multi-directional Promises</a><br>'+
   '<a href="/4-stopping-promises">4 - Stopping Promises</a><br>'+
   '<a href="/5-async-await">5 - Async/Await</a><br>'+
-  '<a href="/6-non-reported">6 - Non-Reported Errors</a><br>';
+  '<a href="/6-un-reported">6 - Un-Reported Errors</a><br>';
 
   res.send(index);
 }

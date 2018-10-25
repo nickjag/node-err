@@ -73,20 +73,31 @@ const report = function(err, opts) {
 
 /**
  * Main error handling utility.
- *
- * Use this in a catch block.
- *
- * @param {(object|*)}  arg             Main error object or custom value.
- * @param {object}      opts            Options object.
- * @param {string}      [opts.name]     Name of error.
- * @param {object}      [opts.req]      Express request object.
- * @param {number}      [opts.status]   Http status to return.
- * @param {object}      [opts.context]  Custom data to attach to error.
  * 
- * @return {(object|func)}              Promise rejection or function.
+ * Use this in a catch block. Accepts args for invoking 
+ * one of two different behaviors: error re-throwing 
+ * or custom value handling.
+ *
+ * @param {(object|*)}        arg             Main error object or custom value.
+ * @param {(object|boolean)}  arg2            Options object or boolean.
+ * 
+ * @param {string}            [arg2.name]     Name of error.
+ * @param {object}            [arg2.req]      Express request object.
+ * @param {number}            [arg2.status]   Http status to return.
+ * @param {object}            [arg2.context]  Custom data to attach to error.
+ * 
+ * @return {(object|func)}                    Promise rejection or function.
  */
-const repeat = (arg, opts={}) => {
-  return (arg instanceof Error) ? handleError(arg, opts) : handleCustom(arg);
+const repeat = (arg, arg2) => {
+
+  if (arg instanceof Error) {
+    let opts = (typeof arg2 === 'undefined') ? {} : arg2;
+    return handleError(arg, opts);
+  }
+  else {
+    let addReport = (typeof arg2 === 'undefined') ? false : true;
+    return handleCustom(arg, addReport);
+  }
 }
 
 /**
@@ -137,11 +148,12 @@ const handleError = function(err, opts) {
  *
  * Handles the error reporting and custom value.
  *
- * @param {*}           arg             Custom value.
+ * @param {*}           customVal       Custom value.
+ * @param {boolean}     addReport       Add reporting/logging or not.
  * 
  * @return {func}                       Callback function.
  */
-const handleCustom = function(arg) {
+const handleCustom = function(customVal, addReport) {
   
   return (err, opts={}) => {
 
@@ -149,15 +161,18 @@ const handleCustom = function(arg) {
       return rethrow(err, opts);
     }
 
-    let name = (opts.name || err.name || '');
+    if (addReport) {
 
-    report(err, { 
-      ...opts, 
-      name: name += '; SILENCED;',
-      status: '0'
-    });
+      let name = (opts.name || err.name || '');
 
-    return (typeof arg === 'undefined') ? err : arg;
+      report(err, { 
+        ...opts, 
+        name: name += '; SILENCED;',
+        status: '0'
+      });
+    }
+
+    return (typeof customVal === 'undefined') ? err : customVal;
   }
 }
 

@@ -12,11 +12,11 @@ module.exports = (req, res, next) => {
 
   return Promise.resolve()
     .then(() => {
-      let error = new Error('test error');
+      let error = new Error('Cannot fetch users.');
       return Promise.reject(error);
     })
     .catch(err => {
-      return nodeErr.repeat(err, { name: 'MY_CUSTOM_ERROR' });
+      return nodeErr.repeat(err, { name: 'FETCH_USERS' });
     })
     .catch(err => {
       let statusCode = nodeErr.getStatus(err);
