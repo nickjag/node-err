@@ -6,11 +6,9 @@ module.exports = (req, res, next) => {
    * Simple promise chain example.
    * 
    * The first time handleErr is used, the error will receive 
-   * custom details before re-throwing. And each subsequent pass
-   * it will automatically re-throw (without adding details).
-   * 
+   * custom details, be reported, and then re-thrown. If an error 
+   * has already passed through handleErr, it will just be re-thrown.
    */
-  
 
   return Promise.resolve()
     .then(() => {
@@ -19,9 +17,6 @@ module.exports = (req, res, next) => {
     })
     .catch(err => {
       return nodeErr.repeat(err, { name: 'MY_CUSTOM_ERROR' });
-    })
-    .then(() => {
-      // skipped
     })
     .catch(err => {
       let statusCode = nodeErr.getStatus(err);

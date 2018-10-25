@@ -1,27 +1,29 @@
 const express = require('express');
 const app = express();
 
+const examples = require('./controllers/examples');
 const simplePromise = require('./controllers/1_simple_promise');
 const multiLevelPromises = require('./controllers/2_multi_level_promises');
 const multiDirectionalPromises = require('./controllers/3_multi_directional_promises');
-const expressNext = require('./controllers/4_express_next');
-const unhandled = require('./controllers/5_unhandled');
+const stoppingPromises = require('./controllers/4_stopping_promises');
+const asyncAwait = require('./controllers/5_async_await');
+const nonReported = require('./controllers/6_non_reported');
 
-// require
+// require nodeErr
 
 const nodeErr = require('../index');
 
-app.get('/', (req, res) => res.send('hello'));
-
 // examples
 
+app.get('/', examples);
 app.get('/1-simple-promise', simplePromise);
 app.get('/2-multi-level-promises', multiLevelPromises);
 app.get('/3-multi-directional-promises', multiDirectionalPromises);
-app.get('/4-express-next', expressNext);
-app.get('/5-unhandled', unhandled);
+app.get('/4-stopping-promises', stoppingPromises);
+app.get('/5-async-await', asyncAwait);
+app.get('/6-non-reported', nonReported);
 
-// report and return plain, unhandled errors
+// report and return plain, non-reported errors
 
 app.use((err, req, res, next) => {
   nodeErr.stop(err, { req });

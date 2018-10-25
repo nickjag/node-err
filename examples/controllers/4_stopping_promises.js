@@ -3,11 +3,10 @@ const nodeErr = require('../../index');
 module.exports = (req, res, next) => {
 
   /**
-   * Handing error back using the Express next().
+   * Stopping the promise chain.
    * 
-   * Use stop() function to add reporting to
+   * Use the stop() function to add reporting to
    * an error before using the Express next().
-   * 
    */
 
   return Promise.resolve()
@@ -16,7 +15,7 @@ module.exports = (req, res, next) => {
       return Promise.reject(error);
     })
     .catch(err => {
-      nodeErr.stop(err, { name: 'MY_CUSTOM_ERROR', status: 401 });
+      nodeErr.stop(err, { name: 'MY_CUSTOM_ERROR' });
       return next(err);
     });
 

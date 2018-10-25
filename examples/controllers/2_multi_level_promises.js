@@ -3,14 +3,13 @@ const nodeErr = require('../../index');
 module.exports = (req, res, next) => {
 
   /**
-   * Multi-level promise - bubble-up error.
+   * Multi-level promise - bubbling up error.
    * 
-   * Level 1 => level 2, level 2 => level 3. 
-   * An error will occur on level 3, which 
-   * bubbles-up to level 1.
+   * An error occurs on level 3, which bubbles up
+   * to level 1.
    */
 
-  // Level 1 (outputs to browser)
+  // Level 1
 
   return Promise.resolve()
     .then(() => level2())

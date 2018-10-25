@@ -4,13 +4,13 @@ module.exports = (req, res, next) => {
 
   /**
    * Multi-directional promise - bubble-up error with 
-   * local error handling as well.
+   * localized error handling as well.
    * 
    * A level 3 error will still bubble-up to level 1, but a
-   * level 2 error will send a custom output.
+   * level 2 error will send a customized output to level 1.
    */
 
-  // Level 1 (outputs to browser)
+  // Level 1
 
   return Promise.resolve()
     .then(() => level2())

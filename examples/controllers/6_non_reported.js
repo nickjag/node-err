@@ -1,6 +1,6 @@
 module.exports = (req, res, next) => {
 
-  // Unhandled error, caught by index.js Express middleware.
+  // Non-reported errors will be caught by Express middleware.
 
   return next(new Error());
   
