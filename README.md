@@ -297,7 +297,7 @@ return saveAnalytics()
     return (result) ? next() : retry(); // this is skipped because of our db conn error
   })
   .catch(err => {
-    return next(err); // something worse happened, maybe database conn err...
+    return next(err); // return db conn error
   })
 }
 

@@ -1,10 +1,16 @@
 {
   "name": "node-err",
   "version": "1.0.1",
-  "description": "Utility for easy handling of error flows in Node",
+  "description": "Simplify error handling and logging for Node. ",
   "license": "MIT",
   "repository": "nickjag/node-err",
   "main": "index.js",
+  "keywords": [
+    "node-err",
+    "node-error",
+    "node-errors",
+    "Error"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
