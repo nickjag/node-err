@@ -3,6 +3,13 @@ let config = {
   status: 500,
   debug: false,
   logger: err => console.warn(err._name, err),
+  responseTemplate: {
+    error_code: "error_code",
+    error_type: "error_type",
+    error_message: "error_message",
+    error_context: "error_context",
+    error_fields: "error_fields",
+  }
 };
 
 /**
@@ -51,6 +58,8 @@ const report = function(err, opts) {
     status=config.status,
     context=null,
     req=null,
+    template=config.responseTemplate,
+    response=null
   } = opts;
 
   err._reported    = true;
@@ -58,6 +67,8 @@ const report = function(err, opts) {
   err._status     = status;
   err._context    = context;
   err._time       = Math.floor(Date.now());
+  err._template   = template;
+  err._response   = response;
 
   if (req) {
     err._ipAddr      = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -211,6 +222,23 @@ const stop = function(err, opts={}) {
  */
 const getStatus = function(err) {
   return err._status || config.status;
+}
+
+/**
+ * Generate an error response for the error.
+ *
+ * @param {object}      err             Main error object or custom.
+ *
+ * @return {object}                     Error Response Object
+ */
+const getResponse = function(err) {
+  return {
+    [err._template.error_code]: err._response[err._template.error_code],
+    [err._template.error_type]: err._response[err._template.error_type],
+    [err._template.error_message]: err._response[err._template.error_message],
+    [err._template.error_context]: err._response[err._template.error_context],
+    [err._template.error_field]: err._response[err._template.error_field],
+  };
 }
 
 // exports
