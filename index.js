@@ -3,13 +3,7 @@ let config = {
   status: 500,
   debug: false,
   logger: err => console.warn(err._name, err),
-  responseTemplate: {
-    error_code: "error_code",
-    error_type: "error_type",
-    error_message: "error_message",
-    error_context: "error_context",
-    error_fields: "error_fields",
-  }
+  responseTemplate: {},
 };
 
 /**
@@ -232,15 +226,27 @@ const getStatus = function(err) {
  * @return {object}                     Error Response Object
  */
 const getResponse = function(err) {
+  const responses = Object.keys(err._response)
+    .filter(function (response) {
+      if (err._template.includes(response)) {
+        return response;
+      }
+    })
+    .reduce(function (obj, key) {
+      obj[key] = err._response[key];
+      return obj;
+    }, {});
   return {
-    [err._template.error_code]: err._response[err._template.error_code],
-    [err._template.error_type]: err._response[err._template.error_type],
-    [err._template.error_message]: err._response[err._template.error_message],
-    [err._template.error_context]: err._response[err._template.error_context],
-    [err._template.error_field]: err._response[err._template.error_field],
+    responses,
   };
 }
 
 // exports
 
-module.exports = { setup, repeat, stop, getStatus };
+module.exports = {
+  setup,
+  repeat,
+  stop,
+  getStatus,
+  getResponse,
+};
