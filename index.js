@@ -3,6 +3,7 @@ let config = {
   status: 500,
   debug: false,
   logger: err => console.warn(err._name, err),
+  responseTemplate: {},
 };
 
 /**
@@ -51,6 +52,8 @@ const report = function(err, opts) {
     status=config.status,
     context=null,
     req=null,
+    template=config.responseTemplate,
+    response=null
   } = opts;
 
   err._reported    = true;
@@ -58,6 +61,8 @@ const report = function(err, opts) {
   err._status     = status;
   err._context    = context;
   err._time       = Math.floor(Date.now());
+  err._template   = template;
+  err._response   = response;
 
   if (req) {
     err._ipAddr      = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -213,6 +218,35 @@ const getStatus = function(err) {
   return err._status || config.status;
 }
 
+/**
+ * Generate an error response for the error.
+ *
+ * @param {object}      err             Main error object or custom.
+ *
+ * @return {object}                     Error Response Object
+ */
+const getResponse = function(err) {
+  const responses = Object.keys(err._response)
+    .filter(function (response) {
+      if (err._template.includes(response)) {
+        return response;
+      }
+    })
+    .reduce(function (obj, key) {
+      obj[key] = err._response[key];
+      return obj;
+    }, {});
+  return {
+    responses,
+  };
+}
+
 // exports
 
-module.exports = { setup, repeat, stop, getStatus };
+module.exports = {
+  setup,
+  repeat,
+  stop,
+  getStatus,
+  getResponse,
+};
