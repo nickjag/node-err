@@ -2,7 +2,7 @@ let config = {
   prefix: 'SERVER_ERROR',
   status: 500,
   debug: false,
-  logger: err => console.warn(err._name, err),
+  logger: err => console.warn(pad(), err._name, err, pad()),
   responseTemplate: {},
 };
 
@@ -239,6 +239,16 @@ const getResponse = function(err) {
   return {
     responses,
   };
+}
+
+/**
+ * Add padding to error logging.
+ * 
+ * @return {string}                     Padding
+ */
+const pad = function() {
+  let padding = [...Array(30)].reduce((s, u) => s + "*", "");
+  return "\n" + padding + "\n";
 }
 
 // exports
