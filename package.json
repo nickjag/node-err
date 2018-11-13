@@ -12,11 +12,15 @@
     "Error"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha .",
+    "watch": "mocha . --watch"
   },
   "author": {
     "name": "Nick Jagodzinski",
     "email": "jag.nick@gmail.com",
     "url": "nickjag.com"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
   }
 }

@@ -226,16 +226,11 @@ const getStatus = function(err) {
  * @return {object}                     Error Response Object
  */
 const getResponse = function(err) {
-  const responses = Object.keys(err._response)
-    .filter(function (response) {
-      if (err._template.includes(response)) {
-        return response;
-      }
-    })
-    .reduce(function (obj, key) {
-      obj[key] = err._response[key];
-      return obj;
-    }, {});
+  const responses = err._template.reduce(function (obj, item) {
+    obj[item] = (err._response[item]) ? err._response[item] : null;
+    return obj;
+  }, {});
+
   return {
     responses,
   };
