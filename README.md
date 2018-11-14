@@ -86,6 +86,36 @@ But you can set up your only logger too...
 
 <br>
 
+**Custom Output Responses**
+
+Configure and send response data for outputting to the browser. View the Simple Promises example to see it in action.
+
+```
+nodeErr.setup({ responses: ['user_message','internal_code'] });
+
+return saveAnalytics()
+  .catch(err => {
+
+    return nodeErr.repeat(err, {
+      status: 500,
+      responses: {
+        user_message: 'Oops! Something went wrong.',
+        internal_code: '2352',
+      }
+    });
+  })
+  .catch(err => {
+
+    let statusCode = nodeErr.getStatus(err);
+    let outputResponse = nodeErr.getResponse(err);
+    
+    return res.status(statusCode).send(outputResponse);
+  });
+}
+```
+
+<br>
+
 **Localized/Silent Error Handling**
 
 Sometimes you need to handle some errors a little differently, while still allowing other errors to bubble-up or pass through...

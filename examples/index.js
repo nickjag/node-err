@@ -7,7 +7,7 @@ const multiLevelPromises = require('./controllers/2_multi_level_promises');
 const multiDirectionalPromises = require('./controllers/3_multi_directional_promises');
 const stoppingPromises = require('./controllers/4_stopping_promises');
 const asyncAwait = require('./controllers/5_async_await');
-const unReported = require('./controllers/6_un_reported');
+const unReported = require('./controllers/6_unreported');
 
 // require nodeErr
 
@@ -21,7 +21,7 @@ app.get('/2-multi-level-promises', multiLevelPromises);
 app.get('/3-multi-directional-promises', multiDirectionalPromises);
 app.get('/4-stopping-promises', stoppingPromises);
 app.get('/5-async-await', asyncAwait);
-app.get('/6-un-reported', unReported);
+app.get('/6-unreported', unReported);
 
 // report and return plain, non-reported errors
 

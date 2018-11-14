@@ -34,7 +34,7 @@ describe('#getStatus', () => {
 describe('#getResponse', () => {
   it('returns a custom response message', () => {
     nodeErr.setup({
-      responseTemplate: [
+      responses: [
         'my_custom_error',
         'some_other_message',
       ],
@@ -44,24 +44,24 @@ describe('#getResponse', () => {
       throw new Error('I AM ERROR');
     } catch (err) {
       nodeErr.repeat(err, {
-        response: {
+        responses: {
           my_custom_error: 'I forgot to carry the two',
           some_other_message: 'I should also be returned',
         }
       });
 
-      const responses = {
+      const expectedResponses = JSON.stringify({
         my_custom_error: 'I forgot to carry the two',
         some_other_message: 'I should also be returned',
-      };
+      });
 
-      assert.deepEqual(nodeErr.getResponse(err), { responses });
+      assert.deepEqual(nodeErr.getResponse(err), expectedResponses);
     }
   });
 
   it('should ignore responses not in the template', () => {
     nodeErr.setup({
-      responseTemplate: [
+      responses: [
         'my_custom_error',
         'nullified_error',
       ],
@@ -71,18 +71,18 @@ describe('#getResponse', () => {
       throw new Error('I AM ERROR');
     } catch (err) {
       nodeErr.repeat(err, {
-        response: {
+        responses: {
           my_custom_error: 'I forgot to carry the two',
           error_that_should_not_be: 'I should not be returned',
         }
       });
 
-      const responses = {
+      const expectedResponses = JSON.stringify({
         my_custom_error: 'I forgot to carry the two',
         nullified_error: null,
-      };
+      });
 
-      assert.deepEqual(nodeErr.getResponse(err), { responses });
+      assert.deepEqual(nodeErr.getResponse(err), expectedResponses);
     }
   });
 });

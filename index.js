@@ -1,9 +1,9 @@
 let config = {
-  prefix: 'SERVER_ERROR',
   status: 500,
+  prefix: 'SERVER_ERROR',
+  logger: defaultLogger,
   debug: false,
-  logger: err => console.warn(err._name, err),
-  responseTemplate: {},
+  template: null,
 };
 
 /**
@@ -11,15 +11,25 @@ let config = {
  *
  * Used to apply custom options.
  *
- * @param {object}    opts              Containing all data.
- * @param {number}    opts.status       Default error status code.
- * @param {string}    opts.prefix       Prefix for error name.
- * @param {func}      opts.logger       Logging handler function, accepts err argument.
- * @param {boolean}   opts.debug        Debug mode.
+ * @param {object}    opts                  Containing all data.
+ * @param {number}    opts.status           Default error status code.
+ * @param {string}    opts.prefix           Prefix for error name.
+ * @param {func}      opts.logger           Logging handler function, accepts err argument.
+ * @param {boolean}   opts.debug            Debug mode.
+ * @param {array}     opts.responses        Array of response template properties.
  * 
  * @return {undefined}
  */
 const setup = function(opts={}) {
+
+  if (opts.responses
+    && typeof opts.responses === 'object'
+    && opts.responses.length
+    && opts.responses.length > 0) {
+    
+    opts.template = opts.responses;
+  }
+
   config = {
     ...config,
     ...opts,
@@ -38,6 +48,7 @@ const setup = function(opts={}) {
  * @param {object}    [opts.req]        Express request object.
  * @param {number}    [opts.status]     Http status to return.
  * @param {object}    [opts.context]    Custom data to attach to error.
+ * @param {object}    [ops.responses]   Data to apply to response template.
  * 
  * @return {undefined}                  Nothing returned;
  */
@@ -48,12 +59,10 @@ const report = function(err, opts) {
   }
 
   let {
-    name='UNHANDLED',
+    name='UNREPORTED',
     status=config.status,
     context=null,
     req=null,
-    template=config.responseTemplate,
-    response=null
   } = opts;
 
   err._reported    = true;
@@ -61,8 +70,7 @@ const report = function(err, opts) {
   err._status     = status;
   err._context    = context;
   err._time       = Math.floor(Date.now());
-  err._template   = template;
-  err._response   = response;
+  err._response   = generateResponse(config.template, opts.responses);
 
   if (req) {
     err._ipAddr      = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -208,7 +216,28 @@ const stop = function(err, opts={}) {
 }
 
 /**
- * Get status code of error.
+ * Generate an error response for the error.
+ *
+ * @param {object}      err             Main error object or custom.
+ *
+ * @return {object}                     Error Response Object
+ */
+const generateResponse = function(template, responses) {
+  
+  if (!template || !responses) {
+    return null;
+  }
+
+  let response = template.reduce(function (obj, item) {
+    obj[item] = (responses && responses[item]) ? responses[item] : null;
+    return obj;
+  }, {});
+
+  return JSON.stringify(response);
+}
+
+/**
+ * Get status code of an error.
  *
  * @param {object}      err             Main error object or custom.
  * 
@@ -219,21 +248,40 @@ const getStatus = function(err) {
 }
 
 /**
- * Generate an error response for the error.
+ * Get response template for an error.
  *
  * @param {object}      err             Main error object or custom.
- *
- * @return {object}                     Error Response Object
+ * 
+ * @return {obj}                        Response object to surface.
  */
 const getResponse = function(err) {
-  const responses = err._template.reduce(function (obj, item) {
-    obj[item] = (err._response[item]) ? err._response[item] : null;
-    return obj;
-  }, {});
+  return err._response || getStatus(err);
+}
 
-  return {
-    responses,
-  };
+/**
+ * Add padding to error logging.
+ * 
+ * @return {string}                     Line break string for cleaner output.
+ */
+const pad = function(n=30, s='*') {
+  let ln = [...Array(n)].reduce(ln => ln + s, "");
+  return "\n" + ln + "\n";
+}
+
+/**
+ * Default logger.
+ * 
+ * @param {object}      err             Main error object or custom.
+ * 
+ * @return {undefined}                  Nothing returned;
+ */
+function defaultLogger(err) {
+  console.warn( 
+    pad(),
+    err._name,
+    err,
+    pad()
+  );
 }
 
 // exports
