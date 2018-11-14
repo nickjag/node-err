@@ -195,7 +195,7 @@ What should you do with all of these errors? Whatever you like...
 
 **Getting Started**
 
-Just require `node-err` and start using...
+Just require `node-err` and start using `repeat` to automatically log and bubble-up errors...
 
 ```
 const nodeErr = require('node-err');
@@ -220,6 +220,7 @@ nodeErr.setup({
   status: 401,
   debug: true,
   logger: (err) => slackChannel('Doh', err)),
+  responses: ['user_message']
 });
 ```
 <br>
@@ -230,6 +231,7 @@ Key | Type | Description
 `status` | *number* | Default HTTP status code error.
 `debug` | *bool* | Output error repetition tracing.
 `logger` | *func* | Custom logging function (accepts Error obj).
+`responses` | *array* | Array of response properties.
 
 <br>
 
@@ -243,7 +245,8 @@ nodeErr.repeat(err, {
   name: 'AWS_IMAGE_NOT_SAVED',
   req: req,
   status: 400,
-  context: { imageName: 'budget-report.ppt'}
+  context: { imageName: 'budget-report.ppt'},
+  responses: { user_message: 'Oops! Something went wrong.' }
 });
 ```
 <br>
@@ -254,6 +257,7 @@ Key | Type | Description
 `req` | *object* | (optional) Express request object.
 `status` | *bool* | (optional) Desired http status response code.
 `context` | *any* | (optional) Whatever works.
+`responses` | *object* | (optional) Data to place on the response output.
 
 <br>
 
@@ -264,6 +268,8 @@ If `req` is provided, you'll also get access to:
 + Request Body
 + Request Method
 + User Agent
+
+Any `responses` data provided, must have its property added to the `setup` config.
 
 <br>
 
