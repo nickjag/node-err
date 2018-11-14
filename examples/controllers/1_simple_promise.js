@@ -2,6 +2,10 @@ const nodeErr = require('../../index');
 
 module.exports = (req, res, next) => {
 
+  nodeErr.setup({
+    responses: ['user_message','an_unset_property'],
+  });
+
   /**
    * Simple promise chain example.
    * 
@@ -16,11 +20,18 @@ module.exports = (req, res, next) => {
       return Promise.reject(error);
     })
     .catch(err => {
-      return nodeErr.repeat(err, { name: 'FETCH_USERS' });
+      return nodeErr.repeat(err, { 
+        name: 'FETCH_USERS',
+        status: 500,
+        responses: { user_message: 'Oops! Something happened.' }
+      });
     })
     .catch(err => {
+
       let statusCode = nodeErr.getStatus(err);
-      return res.status(statusCode).send('An error ocurred.');
+      let outputResponse = nodeErr.getResponse(err);
+      
+      return res.status(statusCode).send(outputResponse);
     });
 
 }
