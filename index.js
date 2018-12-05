@@ -255,7 +255,7 @@ const getStatus = function(err) {
  * @return {obj}                        Response object to surface.
  */
 const getResponse = function(err) {
-  return err._response || getStatus(err);
+  return err._response ? JSON.parse(err._response) : getStatus(err);
 }
 
 /**
