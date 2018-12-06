@@ -1,9 +1,10 @@
 let config = {
   status: 500,
+  overrideResponses: true,
   prefix: 'SERVER_ERROR',
   logger: defaultLogger,
-  debug: false,
   template: null,
+  debug: false,
 };
 
 /**
@@ -46,6 +47,7 @@ const setup = function(opts={}) {
  * @param {object}    opts              Options object.
  * @param {string}    [opts.name]       Name of error.
  * @param {object}    [opts.req]        Express request object.
+ * @param {boolean}   [opts.log]        Optionally skip logger.
  * @param {number}    [opts.status]     Http status to return.
  * @param {object}    [opts.context]    Custom data to attach to error.
  * @param {object}    [ops.responses]   Data to apply to response template.
@@ -63,6 +65,7 @@ const report = function(err, opts) {
     status=config.status,
     context=null,
     req=null,
+    log=true,
   } = opts;
 
   err._reported    = true;
@@ -80,7 +83,57 @@ const report = function(err, opts) {
     err._userAgent   = req.headers['user-agent'];
   }
 
-  config.logger(err);
+  if (log) {
+    config.logger(err);
+  }
+
+  return;
+}
+
+/**
+ * Error responder.
+ * 
+ * Mutates/adds response information to error object. 
+ * Automatically overrides the original error responses and status.
+ *
+ * @param {object}    err               Main error object.
+ * @param {object}    opts              Options object.
+ * @param {boolean}   [opts.log]        Optionally skip logger.
+ * @param {object}    [opts.req]        Express request object.
+ * @param {number}    [opts.status]     Http status to return.
+ * @param {object}    [opts.responses]  Data to override/apply to response template.
+ * 
+ * @return {undefined}                  Nothing returned;
+ */
+const respond = function(err, opts) {
+
+  let {
+    responses=null,
+    status=null,
+    req=null,
+    log=true,
+  } = opts;
+
+  if (status) {
+    err._status = status;
+  }
+
+  if (responses) {
+    err._response = generateResponse(config.template, opts.responses);
+  }
+
+  if (req) {
+    err._ipAddr      = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    err._reqUrl      = req.protocol + '://' + req.get('host') + req.originalUrl;
+    err._reqBody     = req.body;
+    err._reqMethod   = req.method;
+    err._userAgent   = req.headers['user-agent'];
+  }
+  
+  if (log) {
+    config.logger(Object.assign(err, { _name: 'RESPONSE_OVERRIDE' }));
+  }
+  
   return;
 }
 
@@ -152,6 +205,9 @@ const handleError = function(err, opts) {
   if (!err._reported) {
     report(err, opts);
   }
+  else if (config.overrideResponses) {
+    respond(err, opts);
+  }
 
   return rethrow(err, opts);
 }
@@ -171,6 +227,11 @@ const handleCustom = function(customVal, addReport) {
   return (err, opts={}) => {
 
     if (err._reported) {
+      
+      if (config.overrideResponses) {
+        respond(err, opts);
+      }
+
       return rethrow(err, opts);
     }
 
@@ -208,6 +269,11 @@ const stop = function(err, opts={}) {
   // return just the error (no promise)
   
   if (err._reported) {
+
+    if (config.overrideResponses) {
+      respond(err, opts);
+    }
+    
     return;
   }
 
@@ -292,4 +358,5 @@ module.exports = {
   stop,
   getStatus,
   getResponse,
+  logger: defaultLogger
 };
