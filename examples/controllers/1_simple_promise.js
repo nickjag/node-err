@@ -9,9 +9,9 @@ module.exports = (req, res, next) => {
   /**
    * Simple promise chain example.
    * 
-   * The first time handleErr is used, the error will receive 
+   * The first time repeat is used, the error will receive 
    * custom details, be reported, and then re-thrown. If an error 
-   * has already passed through handleErr, it will just be re-thrown.
+   * has already passed through repeat, it will just be re-thrown.
    */
 
   return Promise.resolve()
@@ -20,14 +20,13 @@ module.exports = (req, res, next) => {
       return Promise.reject(error);
     })
     .catch(err => {
-      return nodeErr.repeat(err, { 
-        name: 'FETCH_USERS',
+      return nodeErr.repeat(err, {
+        name: 'FETCH_USERS_QUERY',
         status: 500,
         responses: { user_message: 'Oops! Something happened.' }
       });
     })
     .catch(err => {
-
       let statusCode = nodeErr.getStatus(err);
       let outputResponse = nodeErr.getResponse(err);
       
