@@ -48,6 +48,7 @@ const setup = function(opts={}) {
  * @param {string}    [opts.name]       Name of error.
  * @param {object}    [opts.req]        Express request object.
  * @param {boolean}   [opts.log]        Optionally skip logger.
+ * @param {boolean}   [opts.censor]     Optionally censor req body logging.
  * @param {number}    [opts.status]     Http status to return.
  * @param {object}    [opts.context]    Custom data to attach to error.
  * @param {object}    [ops.responses]   Data to apply to response template.
@@ -66,6 +67,7 @@ const report = function(err, opts) {
     context=null,
     req=null,
     log=true,
+    censor=false,
   } = opts;
 
   err._reported    = true;
@@ -78,7 +80,7 @@ const report = function(err, opts) {
   if (req) {
     err._ipAddr      = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     err._reqUrl      = req.protocol + '://' + req.get('host') + req.originalUrl;
-    err._reqBody     = req.body;
+    err._reqBody     = !err._censor ? req.body : 'CENSORED';
     err._reqMethod   = req.method;
     err._userAgent   = req.headers['user-agent'];
   }
@@ -99,6 +101,7 @@ const report = function(err, opts) {
  * @param {object}    err               Main error object.
  * @param {object}    opts              Options object.
  * @param {boolean}   [opts.log]        Optionally skip logger.
+ * @param {boolean}   [opts.censor]     Optionally censor req body logging.
  * @param {object}    [opts.req]        Express request object.
  * @param {number}    [opts.status]     Http status to return.
  * @param {object}    [opts.responses]  Data to override/apply to response template.
@@ -107,30 +110,41 @@ const report = function(err, opts) {
  */
 const respond = function(err, opts) {
 
+  let modified = false;
+  
   let {
     responses=null,
     status=null,
     req=null,
     log=true,
+    censor=false,
   } = opts;
 
   if (status) {
     err._status = status;
+    modified = true;
+  }
+
+  if (censor) {
+    err._censor = censor;
+    modified = true;
   }
 
   if (responses) {
     err._response = generateResponse(config.template, opts.responses);
+    modified = true;
   }
 
   if (req) {
     err._ipAddr      = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     err._reqUrl      = req.protocol + '://' + req.get('host') + req.originalUrl;
-    err._reqBody     = req.body;
+    err._reqBody     = !err._censor ? req.body : 'CENSORED';
     err._reqMethod   = req.method;
     err._userAgent   = req.headers['user-agent'];
+    modified = true;
   }
   
-  if (log) {
+  if (log && modified) {
     config.logger(Object.assign(err, { _name: 'RESPONSE_OVERRIDE' }));
   }
   
