@@ -74,6 +74,7 @@ const report = function(err, opts) {
   err._name       = config.prefix + ' - ' + name;
   err._status     = status;
   err._context    = context;
+  err._censor     = censor;
   err._time       = Math.floor(Date.now());
   err._response   = generateResponse(config.template, opts.responses);
 
