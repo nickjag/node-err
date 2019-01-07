@@ -220,7 +220,8 @@ nodeErr.setup({
   status: 401,
   debug: true,
   logger: (err) => slackChannel('Doh', err)),
-  responses: ['user_message']
+  responses: ['user_message'],
+  overrideResponses: true,
 });
 ```
 <br>
@@ -232,6 +233,7 @@ Key | Type | Description
 `debug` | *bool* | Output error repetition tracing.
 `logger` | *func* | Custom logging function (accepts Error obj).
 `responses` | *array* | Array of response properties.
+`overrideResponses` | *bool* | Allow automatic overwrite of responses when bubbling up.
 
 <br>
 
@@ -246,7 +248,9 @@ nodeErr.repeat(err, {
   req: req,
   status: 400,
   context: { imageName: 'budget-report.ppt'},
-  responses: { user_message: 'Oops! Something went wrong.' }
+  responses: { user_message: 'Oops! Something went wrong.' },
+  log: false,
+  censor: true,
 });
 ```
 <br>
@@ -258,6 +262,8 @@ Key | Type | Description
 `status` | *bool* | (optional) Desired http status response code.
 `context` | *any* | (optional) Whatever works.
 `responses` | *object* | (optional) Data to place on the response output.
+`log` | *bool* | (optional) Skip logging at this repeat node (intentional errors).
+`censor` | *bool* | (optional) Skip request body log (persists with bubbling up).
 
 <br>
 
