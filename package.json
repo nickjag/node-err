@@ -1,6 +1,6 @@
 {
   "name": "node-err",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Simplify error handling and logging for Node. ",
   "license": "MIT",
   "repository": "nickjag/node-err",
